@@ -9,7 +9,7 @@ const fakeStream = { getTracks: () => [fakeTrack()], getVideoTracks: () => [fake
 const lobbyJoin = vi.fn();
 vi.mock('./components/Lobby', () => ({ Lobby: ({ meetingId, onJoin }: { meetingId: string; onJoin?: (username: string, stream: MediaStream, v1: boolean, v2: boolean) => void }) => { lobbyJoin(meetingId); if (onJoin) onJoin('u', fakeStream, true, true); return <div>LOBBY</div>; } }));
 
-const callProps: Record<string, unknown> = {};
+const callProps: Record<string, any> = {};
 vi.mock('./components/CallScreen', () => ({ CallScreen: (props: Record<string, unknown>) => { Object.assign(callProps, props); return <div>CALL</div>; } }));
 
 vi.mock('./utils/routing', () => ({
