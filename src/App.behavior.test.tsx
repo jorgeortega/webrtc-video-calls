@@ -5,12 +5,12 @@ import { vi } from 'vitest';
 vi.mock('./components/Home', () => ({ Home: () => <div>HOME</div> }));
 
 const fakeTrack = () => ({ stop: vi.fn() });
-const fakeStream = { getTracks: () => [fakeTrack()], getVideoTracks: () => [fakeTrack()], getAudioTracks: () => [fakeTrack()], id: 's1' } as any;
+const fakeStream = { getTracks: () => [fakeTrack()], getVideoTracks: () => [fakeTrack()], getAudioTracks: () => [fakeTrack()], id: 's1' } as unknown as MediaStream;
 const lobbyJoin = vi.fn();
-vi.mock('./components/Lobby', () => ({ Lobby: ({ meetingId, onJoin }: any) => { lobbyJoin(meetingId); onJoin && onJoin('u', fakeStream, true, true); return <div>LOBBY</div>; } }));
+vi.mock('./components/Lobby', () => ({ Lobby: ({ meetingId, onJoin }: { meetingId: string; onJoin?: (username: string, stream: MediaStream, v1: boolean, v2: boolean) => void }) => { lobbyJoin(meetingId); if (onJoin) onJoin('u', fakeStream, true, true); return <div>LOBBY</div>; } }));
 
-const callProps: any = {};
-vi.mock('./components/CallScreen', () => ({ CallScreen: (props: any) => { Object.assign(callProps, props); return <div>CALL</div>; } }));
+const callProps: Record<string, unknown> = {};
+vi.mock('./components/CallScreen', () => ({ CallScreen: (props: Record<string, unknown>) => { Object.assign(callProps, props); return <div>CALL</div>; } }));
 
 vi.mock('./utils/routing', () => ({
   parseRoute: () => ({ view: 'meeting', meetingId: 'meet-123' }),
