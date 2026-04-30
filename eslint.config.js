@@ -20,4 +20,13 @@ export default defineConfig([
       globals: globals.browser,
     },
   },
+  {
+    files: ['**/*.test.{ts,tsx}','**/*.spec.{ts,tsx}','src/test/**/*.{ts,tsx,js,jsx}'],
+    rules: {
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-unused-vars': 'off',
+      '@typescript-eslint/ban-ts-comment': 'off',
+      '@typescript-eslint/no-unused-expressions': 'off'
+    }
+  }
 ])
