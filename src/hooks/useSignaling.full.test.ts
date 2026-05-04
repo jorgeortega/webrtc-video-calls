@@ -1,24 +1,31 @@
 import { renderHook, act } from '@testing-library/react';
-import { vi } from 'vitest';
+import { vi, test, expect, beforeEach } from 'vitest';
 
 class FakeWS2 {
+  static CONNECTING = 0;
   static OPEN = 1;
+  static CLOSING = 2;
+  static CLOSED = 3;
+  static instances: FakeWS2[] = [];
   onopen = () => {};
   onclose = () => {};
   onmessage = (_: any) => {};
   onerror = (_: any) => {};
-  readyState = 0;
+  readyState = FakeWS2.CONNECTING;
   send = vi.fn();
-  close = vi.fn(() => { this.readyState = 3; this.onclose(); });
+  close = vi.fn(() => { this.readyState = FakeWS2.CLOSED; this.onclose(); });
   constructor() { 
-    (FakeWS2 as any).instances = (FakeWS2 as any).instances || [];
-    (FakeWS2 as any).instances.push(this);
+    FakeWS2.instances.push(this);
   }
 }
 
 vi.stubGlobal('WebSocket', FakeWS2 as any);
 
 import { useSignaling } from './useSignaling';
+
+beforeEach(() => {
+  FakeWS2.instances = [];
+});
 
 test('connect and message handling and disconnect', () => {
   const onMessage = vi.fn();
@@ -28,10 +35,10 @@ test('connect and message handling and disconnect', () => {
   const { result } = renderHook(() => useSignaling({ onMessage, onConnected, onDisconnected }));
 
   act(() => result.current.connect());
-  const ws = (WebSocket as any).instances[0];
+  const ws = FakeWS2.instances[0];
 
   // simulate open
-  act(() => { ws.readyState = (WebSocket as any).OPEN; ws.onopen(); });
+  act(() => { ws.readyState = FakeWS2.OPEN; ws.onopen(); });
   expect(onConnected).toHaveBeenCalled();
 
   // simulate message
@@ -58,7 +65,7 @@ test('invalid JSON in onmessage logs error and send warns when disconnected', ()
   const { result } = renderHook(() => useSignaling({ onMessage, onConnected, onDisconnected }));
 
   act(() => result.current.connect());
-  const ws = (WebSocket as any).instances.pop();
+  const ws = FakeWS2.instances.pop()!;
   act(() => ws.onmessage({ data: 'not-json' }));
   expect(consoleError).toHaveBeenCalled();
 

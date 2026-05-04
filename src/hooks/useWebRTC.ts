@@ -65,10 +65,20 @@ export function useWebRTC({
     { urls: "stun:stun.metered.ca:80" },
   ]);
 
-  // Refs for current values to avoid stale closures
+  // Use refs for callbacks and current values to avoid stale closures and unnecessary re-renders
+  const sendSignalingRef = useRef(sendSignaling);
+  const onChatMessageRef = useRef(onChatMessage);
   const localStreamRef = useRef<MediaStream | null>(null);
   const screenStreamRef = useRef<MediaStream | null>(null);
   const usernameRef = useRef(username);
+
+  useEffect(() => {
+    sendSignalingRef.current = sendSignaling;
+  }, [sendSignaling]);
+
+  useEffect(() => {
+    onChatMessageRef.current = onChatMessage;
+  }, [onChatMessage]);
 
   useEffect(() => {
     localStreamRef.current = localStream;
@@ -107,7 +117,7 @@ export function useWebRTC({
       channel.onmessage = (event) => {
         try {
           const message = JSON.parse(event.data) as ChatMessage;
-          onChatMessage?.(message);
+          onChatMessageRef.current?.(message);
         } catch (err) {
           console.error("Failed to parse data channel message:", err);
         }
@@ -115,7 +125,7 @@ export function useWebRTC({
 
       dataChannelsRef.current.set(remotePeerId, channel);
     },
-    [onChatMessage],
+    [],
   );
 
   const createPeerConnection = useCallback(
@@ -209,7 +219,7 @@ export function useWebRTC({
       // Handle ICE candidates
       pc.onicecandidate = (event) => {
         if (event.candidate) {
-          sendSignaling({
+          sendSignalingRef.current({
             type: "ice-candidate",
             to: remotePeerId,
             candidate: event.candidate.toJSON(),
@@ -234,7 +244,7 @@ export function useWebRTC({
           const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
 
-          sendSignaling({
+          sendSignalingRef.current({
             type: "offer",
             to: remotePeerId,
             sdp: pc.localDescription!,
@@ -245,7 +255,7 @@ export function useWebRTC({
         }
       }
     },
-    [sendSignaling, setupDataChannel],
+    [setupDataChannel],
   );
 
   const handleOffer = useCallback(
@@ -288,7 +298,7 @@ export function useWebRTC({
         const answer = await pc.createAnswer();
         await pc.setLocalDescription(answer);
 
-        sendSignaling({
+        sendSignalingRef.current({
           type: "answer",
           to: remotePeerId,
           sdp: pc.localDescription!,
@@ -303,7 +313,7 @@ export function useWebRTC({
               const renegotiateOffer = await pc.createOffer();
               await pc.setLocalDescription(renegotiateOffer);
 
-              sendSignaling({
+              sendSignalingRef.current({
                 type: "offer",
                 to: remotePeerId,
                 sdp: pc.localDescription!,
@@ -318,7 +328,7 @@ export function useWebRTC({
         console.error("Error handling offer:", err);
       }
     },
-    [createPeerConnection, sendSignaling],
+    [createPeerConnection],
   );
 
   const handleAnswer = useCallback(
@@ -402,9 +412,9 @@ export function useWebRTC({
       });
 
       // Also trigger local message handler for own message
-      onChatMessage?.(message);
+      onChatMessageRef.current?.(message);
     },
-    [peerId, onChatMessage],
+    [peerId],
   );
 
   const addScreenShareTrack = useCallback(
@@ -419,7 +429,7 @@ export function useWebRTC({
           const offer = await pc.createOffer();
           await pc.setLocalDescription(offer);
 
-          sendSignaling({
+          sendSignalingRef.current({
             type: "offer",
             to: remotePeerId,
             sdp: pc.localDescription!,
@@ -430,7 +440,7 @@ export function useWebRTC({
         }
       });
     },
-    [sendSignaling],
+    [],
   );
 
   const removeScreenShareTrack = useCallback(() => {
@@ -450,7 +460,7 @@ export function useWebRTC({
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
 
-        sendSignaling({
+        sendSignalingRef.current({
           type: "offer",
           to: remotePeerId,
           sdp: pc.localDescription!,
@@ -460,7 +470,7 @@ export function useWebRTC({
         console.error("Error renegotiating after removing screen share:", err);
       }
     });
-  }, [sendSignaling]);
+  }, []);
 
   const updatePeerUsername = useCallback(
     (peerId: string, newUsername: string) => {

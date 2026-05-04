@@ -22,7 +22,7 @@ vi.mock('../hooks/useSignaling', () => ({
 }));
 
 vi.mock('../hooks/useWebRTC', () => ({
-  useWebRTC: () => ({ remotePeers: [], addScreenShareTrack: addScreenMock, removeScreenShareTrack: removeScreenMock, sendChatMessage: vi.fn(), closeAllConnections: vi.fn() }),
+  useWebRTC: () => ({ remotePeers: [], addScreenShareTrack: addScreenMock, removeScreenShareTrack: removeScreenMock, sendChatMessage: vi.fn(), closeAllConnections: vi.fn(), initializeIceServers: vi.fn().mockResolvedValue(undefined) }),
 }));
 
 

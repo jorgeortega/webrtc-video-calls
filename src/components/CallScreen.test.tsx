@@ -26,6 +26,7 @@ vi.mock('../hooks/useWebRTC', () => ({
     sendChatMessage: mockSendChatMessage,
     addScreenShareTrack: mockAddScreenShareTrack,
     removeScreenShareTrack: mockRemoveScreenShareTrack,
+    initializeIceServers: vi.fn().mockResolvedValue(undefined),
     remotePeersLength: 0,
   }),
 }));

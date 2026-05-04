@@ -28,7 +28,7 @@ let mockSend = vi.fn();
 let mockUseSignaling = () => ({ connect: vi.fn(), disconnect: vi.fn(), send: mockSend });
 vi.mock('../hooks/useSignaling', () => ({ useSignaling: () => mockUseSignaling() }));
 
-let mockWebrtcImpl = {
+let mockWebrtcImpl: any = {
   remotePeers: [],
   createPeerConnection: vi.fn(),
   handleOffer: vi.fn(),
@@ -41,6 +41,7 @@ let mockWebrtcImpl = {
   removeScreenShareTrack: vi.fn(),
   updatePeerUsername: vi.fn(),
   clearPeerScreenStream: vi.fn(),
+  initializeIceServers: vi.fn().mockResolvedValue(undefined),
 };
 vi.mock('../hooks/useWebRTC', () => ({ useWebRTC: () => mockWebrtcImpl }));
 
@@ -70,6 +71,7 @@ beforeEach(() => {
     removeScreenShareTrack: vi.fn(),
     updatePeerUsername: vi.fn(),
     clearPeerScreenStream: vi.fn(),
+    initializeIceServers: vi.fn().mockResolvedValue(undefined),
   };
   mockStart = vi.fn().mockResolvedValue(null);
   mockStop = vi.fn();

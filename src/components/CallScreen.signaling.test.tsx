@@ -36,6 +36,7 @@ vi.mock('../hooks/useWebRTC', () => ({
     handleIceCandidate,
     updatePeerUsername,
     clearPeerScreenStream,
+    initializeIceServers: vi.fn().mockResolvedValue(undefined),
     remotePeersLength: 0,
   }),
 }));

@@ -13,7 +13,7 @@ vi.mock('../hooks/useSignaling', () => ({
 }));
 
 vi.mock('../hooks/useWebRTC', () => ({
-  useWebRTC: () => ({ remotePeers: [], addScreenShareTrack: vi.fn(), removeScreenShareTrack: vi.fn(), sendChatMessage: vi.fn(), closeAllConnections: closeAllConnectionsMock }),
+  useWebRTC: () => ({ remotePeers: [], addScreenShareTrack: vi.fn(), removeScreenShareTrack: vi.fn(), sendChatMessage: vi.fn(), closeAllConnections: closeAllConnectionsMock, initializeIceServers: vi.fn().mockResolvedValue(undefined) }),
 }));
 
 vi.mock('../hooks/useScreenShare', () => ({
@@ -26,7 +26,7 @@ vi.mock('../hooks/useChat', () => ({
 
 import { CallScreen } from './CallScreen';
 
-test('sends join after mount and cleans up on unmount', () => {
+test('sends join after mount and cleans up on unmount', async () => {
   vi.useFakeTimers();
   const onLeave = vi.fn();
 
@@ -45,6 +45,12 @@ test('sends join after mount and cleans up on unmount', () => {
       onLeave={onLeave}
     />
   );
+
+  // initialization happens in an async function inside useEffect
+  // we need to wait for microtasks to flush
+  await act(async () => {
+    await Promise.resolve();
+  });
 
   // advance timers to trigger join send
   act(() => {

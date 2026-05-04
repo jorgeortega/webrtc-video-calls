@@ -25,8 +25,25 @@ export function useSignaling({
   const wsRef = useRef<WebSocket | null>(null);
   const [isConnected, setIsConnected] = useState(false);
 
+  // Use refs for callbacks to keep returned functions stable
+  const onMessageRef = useRef(onMessage);
+  const onConnectedRef = useRef(onConnected);
+  const onDisconnectedRef = useRef(onDisconnected);
+
+  useEffect(() => {
+    onMessageRef.current = onMessage;
+  }, [onMessage]);
+
+  useEffect(() => {
+    onConnectedRef.current = onConnected;
+  }, [onConnected]);
+
+  useEffect(() => {
+    onDisconnectedRef.current = onDisconnected;
+  }, [onDisconnected]);
+
   const connect = useCallback(() => {
-    if (wsRef.current?.readyState === WebSocket.OPEN) {
+    if (wsRef.current?.readyState === WebSocket.OPEN || wsRef.current?.readyState === WebSocket.CONNECTING) {
       return;
     }
 
@@ -34,18 +51,18 @@ export function useSignaling({
 
     ws.onopen = () => {
       setIsConnected(true);
-      onConnected?.();
+      onConnectedRef.current?.();
     };
 
     ws.onclose = () => {
       setIsConnected(false);
-      onDisconnected?.();
+      onDisconnectedRef.current?.();
     };
 
     ws.onmessage = (event) => {
       try {
         const message = JSON.parse(event.data) as SignalingMessage;
-        onMessage(message);
+        onMessageRef.current(message);
       } catch (err) {
         console.error('Failed to parse signaling message:', err);
       }
@@ -56,7 +73,7 @@ export function useSignaling({
     };
 
     wsRef.current = ws;
-  }, [onMessage, onConnected, onDisconnected]);
+  }, []);
 
   const disconnect = useCallback(() => {
     if (wsRef.current) {
@@ -76,9 +93,12 @@ export function useSignaling({
 
   useEffect(() => {
     return () => {
-      disconnect();
+      if (wsRef.current) {
+        wsRef.current.close();
+        wsRef.current = null;
+      }
     };
-  }, [disconnect]);
+  }, []);
 
   return {
     connect,

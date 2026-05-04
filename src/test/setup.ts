@@ -41,24 +41,26 @@ Object.defineProperty(window, 'matchMedia', {
 
 // Mock WebRTC APIs
 class MockRTCPeerConnection {
-  createOffer = vi.fn().mockResolvedValue({ type: 'offer', sdp: 'sdp' });
-  setLocalDescription = vi.fn().mockResolvedValue(undefined);
-  setRemoteDescription = vi.fn().mockResolvedValue(undefined);
-  addIceCandidate = vi.fn().mockResolvedValue(undefined);
-  createAnswer = vi.fn().mockResolvedValue({ type: 'answer', sdp: 'sdp' });
-  addTrack = vi.fn();
-  removeTrack = vi.fn();
-  getSenders = vi.fn().mockReturnValue([]);
-  createDataChannel = vi.fn().mockReturnValue({
-    send: vi.fn(),
-    close: vi.fn(),
-    onopen: null,
-    onclose: null,
-    onmessage: null,
-    readyState: 'open'
-  });
-  close = vi.fn();
-  restartIce = vi.fn();
+  createOffer() { return Promise.resolve({ type: 'offer', sdp: 'sdp' }); }
+  setLocalDescription() { return Promise.resolve(undefined); }
+  setRemoteDescription() { return Promise.resolve(undefined); }
+  addIceCandidate() { return Promise.resolve(undefined); }
+  createAnswer() { return Promise.resolve({ type: 'answer', sdp: 'sdp' }); }
+  addTrack() {}
+  removeTrack() {}
+  getSenders() { return []; }
+  createDataChannel() {
+    return {
+      send: vi.fn(),
+      close: vi.fn(),
+      onopen: null,
+      onclose: null,
+      onmessage: null,
+      readyState: 'open'
+    };
+  }
+  close() {}
+  restartIce() {}
   onicecandidate = null;
   ontrack = null;
   ondatachannel = null;
@@ -75,12 +77,20 @@ Object.defineProperty(window, 'RTCPeerConnection', {
 
 Object.defineProperty(window, 'RTCSessionDescription', {
   writable: true,
-  value: vi.fn().mockImplementation((init) => init)
+  value: class {
+    constructor(init: any) {
+      Object.assign(this, init);
+    }
+  }
 });
 
 Object.defineProperty(window, 'RTCIceCandidate', {
   writable: true,
-  value: vi.fn().mockImplementation((init) => init)
+  value: class {
+    constructor(init: any) {
+      Object.assign(this, init);
+    }
+  }
 });
 
 // Mock MediaDevices API
@@ -92,10 +102,14 @@ Object.defineProperty(navigator, 'mediaDevices', {
       getTracks: vi.fn().mockReturnValue([]),
       getVideoTracks: vi.fn().mockReturnValue([]),
       getAudioTracks: vi.fn().mockReturnValue([]),
+      addTrack: vi.fn(),
+      removeTrack: vi.fn(),
     }),
     getDisplayMedia: vi.fn().mockResolvedValue({
       getTracks: vi.fn().mockReturnValue([]),
       getVideoTracks: vi.fn().mockReturnValue([{ onended: null }]),
+      addTrack: vi.fn(),
+      removeTrack: vi.fn(),
     }),
     addEventListener: vi.fn(),
     removeEventListener: vi.fn(),

@@ -100,14 +100,17 @@ export function CallScreen({
     }
   }, []);
 
+  const onConnected = useCallback(() => console.log('Connected to signaling server'), []);
+  const onDisconnected = useCallback(() => console.log('Disconnected from signaling server'), []);
+
   const {
     connect: connectSignaling,
     disconnect: disconnectSignaling,
     send: sendSignaling,
   } = useSignaling({
     onMessage: handleSignalingMessage,
-    onConnected: () => console.log('Connected to signaling server'),
-    onDisconnected: () => console.log('Disconnected from signaling server'),
+    onConnected,
+    onDisconnected,
   });
 
   const {
@@ -126,7 +129,8 @@ export function CallScreen({
     onChatMessage: handleChatMessage,
   });
 
-  const { closeAllConnections } = webrtc;
+  // Stabilize webrtc functions for useEffect
+  const { closeAllConnections, initializeIceServers } = webrtc;
 
   // Keep ref updated
   useEffect(() => {
@@ -136,19 +140,20 @@ export function CallScreen({
   // Connect, initialize ICE servers, and join room on mount
   useEffect(() => {
     let mounted = true;
+    let timer: ReturnType<typeof setTimeout>;
 
     async function init() {
       connectSignaling();
 
       try {
         // Ensure ICE servers are ready before joining so peer connections use TURN if available
-        await webrtc.initializeIceServers();
+        await initializeIceServers();
       } catch (err) {
         console.warn('initializeIceServers failed:', err);
       }
 
       // Small delay to ensure WebSocket is connected
-      const timer = setTimeout(() => {
+      timer = setTimeout(() => {
         if (!mounted) return;
         sendSignaling({
           type: 'join',
@@ -157,22 +162,19 @@ export function CallScreen({
           username,
         });
       }, 500);
-
-      // store timer id on cleanup via closure
-      return () => clearTimeout(timer);
     }
 
-    const cleanupPromise = init();
+    init();
 
     return () => {
       mounted = false;
+      if (timer) clearTimeout(timer);
       // ensure connections are closed and signaling disconnected
       closeAllConnections();
       disconnectSignaling();
-      // if init() returned a cleanup timer, it was cleared in its own return; no need to await
-      void cleanupPromise;
     };
-  }, [meetingId, peerId, username, connectSignaling, sendSignaling, disconnectSignaling, closeAllConnections, webrtc.initializeIceServers]);
+    // Only re-run if essential identity changes
+  }, [meetingId, peerId, username, connectSignaling, sendSignaling, disconnectSignaling, closeAllConnections, initializeIceServers]);
 
   const handleToggleScreenShare = async () => {
     if (isScreenSharing) {
