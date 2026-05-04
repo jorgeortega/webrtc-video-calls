@@ -7,7 +7,7 @@
     "dev": "vite",
     "server": "tsx server/index.ts",
     "start:server": "node dist/server/index.js",
-    "build": "npm run lint && npm run test && tsc -b && vite build",
+    "build": "npm run lint && npm run test && vite build && tsc -b",
     "lint": "eslint .",
     "test": "vitest run",
     "test:ui": "vitest --ui",
