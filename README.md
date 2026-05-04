@@ -34,6 +34,21 @@ A full-featured group video calling application using WebRTC mesh topology, Reac
 npm install
 ```
 
+2. Local Metered TURN/STUN credentials (optional but recommended)
+
+Create a .env.local file in the project root with the following variables so the client can fetch TURN credentials from Metered (do not commit secrets):
+
+```env
+VITE_METERED_DOMAIN=your-app-name.metered.live
+VITE_METERED_API_KEY=your_api_key_here
+```
+
+If these variables are not present the app falls back to STUN-only and will still work for most local testing but may fail in restrictive NATs.
+
+Restart the dev server after updating .env.local so Vite picks up the values.
+
+
+
 ## Running the Application
 
 1. Start the signaling server:

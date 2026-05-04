@@ -1,8 +1,8 @@
 import type { IceServer } from "../types";
 
-// Configure these with your Metered domain and API key
-export const METERED_DOMAIN = import.meta.env.METERED_DOMAIN;
-export const METERED_API_KEY = import.meta.env.METERED_API_KEY;
+// Configure these with your Metered domain and API key (exposed to client via Vite)
+export const METERED_DOMAIN = import.meta.env.VITE_METERED_DOMAIN;
+export const METERED_API_KEY = import.meta.env.VITE_METERED_API_KEY;
 
 export async function fetchTurnCredentials(
   domain = METERED_DOMAIN,

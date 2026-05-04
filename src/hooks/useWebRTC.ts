@@ -5,6 +5,7 @@ import type {
   SignalingMessage,
   ChatMessage,
 } from "../types";
+import { fetchTurnCredentials } from "../utils/turnCredentials";
 
 interface UseWebRTCProps {
   localStream: MediaStream | null;
@@ -61,29 +62,7 @@ export function useWebRTC({
     new Map(),
   );
   const iceServersRef = useRef<IceServer[]>([
-    {
-      urls: "stun:stun.relay.metered.ca:80",
-    },
-    {
-      urls: "turn:global.relay.metered.ca:80",
-      username: "cfd690c90aa7967689e1cc06",
-      credential: "z9JTX3Mf6El9Y9NU",
-    },
-    {
-      urls: "turn:global.relay.metered.ca:80?transport=tcp",
-      username: "cfd690c90aa7967689e1cc06",
-      credential: "z9JTX3Mf6El9Y9NU",
-    },
-    {
-      urls: "turn:global.relay.metered.ca:443",
-      username: "cfd690c90aa7967689e1cc06",
-      credential: "z9JTX3Mf6El9Y9NU",
-    },
-    {
-      urls: "turns:global.relay.metered.ca:443?transport=tcp",
-      username: "cfd690c90aa7967689e1cc06",
-      credential: "z9JTX3Mf6El9Y9NU",
-    },
+    { urls: "stun:stun.metered.ca:80" },
   ]);
 
   // Refs for current values to avoid stale closures
@@ -104,8 +83,15 @@ export function useWebRTC({
   }, [username]);
 
   const initializeIceServers = useCallback(async () => {
-    // For this example, we just use STUN. In production, you'd fetch TURN credentials.
-    // Keep the default STUN server
+    try {
+      const fetched = await fetchTurnCredentials();
+      if (fetched && fetched.length) {
+        iceServersRef.current = fetched;
+        console.log("Fetched TURN/STUN credentials from Metered");
+      }
+    } catch (err) {
+      console.warn("Failed to fetch TURN credentials, using default STUN", err);
+    }
   }, []);
 
   const setupDataChannel = useCallback(
