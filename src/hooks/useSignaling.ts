@@ -1,7 +1,8 @@
 import { useRef, useCallback, useEffect, useState } from 'react';
 import type { SignalingMessage } from '../types';
 
-const SIGNALING_SERVER_URL = 'ws://localhost:3001';
+const DEFAULT_SIGNALING_PORT = 3001;
+const SIGNALING_SERVER_URL = import.meta.env.VITE_SIGNALING_URL ?? (typeof window !== 'undefined' ? `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.hostname}:${DEFAULT_SIGNALING_PORT}` : 'ws://localhost:3001');
 
 interface UseSignalingProps {
   onMessage: (message: SignalingMessage) => void;

@@ -1,6 +1,6 @@
 import { WebSocketServer, WebSocket } from 'ws';
 
-const PORT = 3001;
+const PORT = Number(process.env.PORT) || 3001;
 
 interface PeerInfo {
   peerId: string;

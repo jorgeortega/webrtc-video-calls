@@ -133,26 +133,46 @@ export function CallScreen({
     webrtcRef.current = webrtc;
   }, [webrtc]);
 
-  // Connect and join room on mount
+  // Connect, initialize ICE servers, and join room on mount
   useEffect(() => {
-    connectSignaling();
+    let mounted = true;
 
-    // Small delay to ensure WebSocket is connected
-    const timer = setTimeout(() => {
-      sendSignaling({
-        type: 'join',
-        roomId: meetingId,
-        peerId,
-        username,
-      });
-    }, 500);
+    async function init() {
+      connectSignaling();
+
+      try {
+        // Ensure ICE servers are ready before joining so peer connections use TURN if available
+        await webrtc.initializeIceServers();
+      } catch (err) {
+        console.warn('initializeIceServers failed:', err);
+      }
+
+      // Small delay to ensure WebSocket is connected
+      const timer = setTimeout(() => {
+        if (!mounted) return;
+        sendSignaling({
+          type: 'join',
+          roomId: meetingId,
+          peerId,
+          username,
+        });
+      }, 500);
+
+      // store timer id on cleanup via closure
+      return () => clearTimeout(timer);
+    }
+
+    const cleanupPromise = init();
 
     return () => {
-      clearTimeout(timer);
+      mounted = false;
+      // ensure connections are closed and signaling disconnected
       closeAllConnections();
       disconnectSignaling();
+      // if init() returned a cleanup timer, it was cleared in its own return; no need to await
+      void cleanupPromise;
     };
-  }, [meetingId, peerId, username, connectSignaling, sendSignaling, disconnectSignaling, closeAllConnections]);
+  }, [meetingId, peerId, username, connectSignaling, sendSignaling, disconnectSignaling, closeAllConnections, webrtc.initializeIceServers]);
 
   const handleToggleScreenShare = async () => {
     if (isScreenSharing) {
